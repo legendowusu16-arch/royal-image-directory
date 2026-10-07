@@ -77,7 +77,7 @@ function displayName(department) {
 }
 
 function departmentButton(department, className) {
-    const button = makeElement('button', `chart-card ${className}`);
+    const button = makeElement('button', className);
     button.type = 'button';
     button.dataset.departmentId = department.id;
     const icon = makeElement('i', `fas ${departmentIcons[department.name] || 'fa-folder'}`);
@@ -103,7 +103,7 @@ function renderChart() {
             connector.setAttribute('aria-hidden', 'true');
             elements.leadership.append(connector);
         }
-        elements.leadership.append(departmentButton(department, ''));
+        elements.leadership.append(departmentButton(department, 'top-box'));
     });
 
     ordered
@@ -112,7 +112,7 @@ function renderChart() {
             !['PROGRAMS MANAGER', 'MARKETING MANAGER'].includes(department.name)
         )
         .forEach(department => {
-            elements.mainDepartments.append(departmentButton(department, 'main-card'));
+            elements.mainDepartments.append(departmentButton(department, 'yellow-bar-btn'));
         });
 
     ordered
@@ -120,19 +120,19 @@ function renderChart() {
             department.position_type === 'tv_left' && department.name !== 'MARKETING MANAGER'
         )
         .forEach(department => {
-            elements.tvLeft.append(departmentButton(department, 'branch-card'));
+            elements.tvLeft.append(departmentButton(department, 'branch-btn'));
         });
 
     ordered
         .filter(department => department.position_type === 'tv_right')
         .forEach(department => {
-            elements.tvRight.append(departmentButton(department, 'branch-card'));
+            elements.tvRight.append(departmentButton(department, 'branch-btn'));
         });
 
     ordered
         .filter(department => department.position_type === 'ask_institute')
         .forEach(department => {
-            elements.askDepartments.append(departmentButton(department, 'branch-card'));
+            elements.askDepartments.append(departmentButton(department, 'branch-btn'));
         });
 
     elements.emptyChartMessage.hidden = departments.length > 0;
@@ -210,6 +210,40 @@ function addMessage(container, text, kind = 'info') {
     message.dataset.kind = kind;
     container.append(message);
     return message;
+}
+
+function removeDarkBackgroundFromLogo(image) {
+    if (!image || image.dataset.whiteBackgroundApplied === 'true') return;
+
+    const width = image.naturalWidth || image.width;
+    const height = image.naturalHeight || image.height;
+    if (!width || !height) return;
+
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    canvas.width = width;
+    canvas.height = height;
+    context.drawImage(image, 0, 0, width, height);
+
+    const imageData = context.getImageData(0, 0, width, height);
+    const pixels = imageData.data;
+    for (let index = 0; index < pixels.length; index += 4) {
+        const red = pixels[index];
+        const green = pixels[index + 1];
+        const blue = pixels[index + 2];
+        const brightness = (red + green + blue) / 3;
+        if (brightness < 70 && Math.abs(red - green) < 30 && Math.abs(green - blue) < 30) {
+            pixels[index] = 255;
+            pixels[index + 1] = 255;
+            pixels[index + 2] = 255;
+        }
+    }
+
+    context.putImageData(imageData, 0, 0);
+    image.src = canvas.toDataURL('image/jpeg');
+    image.dataset.whiteBackgroundApplied = 'true';
+    image.style.background = '#ffffff';
 }
 
 function makeFormField(labelText, name, options = {}) {
@@ -521,7 +555,7 @@ elements.searchResults.addEventListener('click', event => {
     else openStaffDirectory();
 });
 
-document.querySelector('.chart').addEventListener('click', event => {
+document.querySelector('.container').addEventListener('click', event => {
     const button = event.target.closest('button[data-department-id]');
     if (button) openDepartment(button.dataset.departmentId);
 });
@@ -532,6 +566,14 @@ elements.infoModal.addEventListener('click', event => {
 });
 document.addEventListener('keydown', event => {
     if (event.key === 'Escape' && !elements.infoModal.hidden) closeModal();
+});
+
+document.querySelectorAll('img[data-logo]').forEach(image => {
+    if (image.complete) {
+        removeDarkBackgroundFromLogo(image);
+    } else {
+        image.addEventListener('load', () => removeDarkBackgroundFromLogo(image), { once: true });
+    }
 });
 
 async function initialize() {

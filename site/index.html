@@ -37,34 +37,33 @@
         <p class="sub-title">Organizational Structure</p>
         <div class="title-divider"></div>
         <div class="header-actions">
-            <button class="secondary-button" id="installAppButton" type="button" hidden>Install desktop app</button>
-            <button class="secondary-button" id="adminToggleButton" type="button">Admin sign in</button>
-            <button class="secondary-button" id="signOutButton" type="button" hidden>Sign out</button>
+            <button class="install-app-btn" id="installAppButton" type="button" hidden>Install app</button>
+            <button class="admin-toggle-btn" id="adminToggleButton" type="button">Admin sign in</button>
+            <button class="admin-toggle-btn" id="signOutButton" type="button" hidden>Sign out</button>
         </div>
     </header>
 
-    <section class="logos-container" aria-label="Royal Image Group company logos">
-        <img src="./pic/pc1.jpg" alt="Royal Image logo">
-        <img src="./pic/pc2.jpg" alt="A.M logo">
-        <img src="./pic/pc3.jpg" alt="A&amp;A logo">
-        <img src="./pic/pc4.jpg" alt="R.C logo">
-        <img src="./pic/pc5.jpg" alt="ASK logo">
-        <img src="./pic/pc6.jpg" alt="Company logo">
-        <img src="./pic/pc7.jpg" alt="Company logo">
-    </section>
+    <div class="logos-container" aria-label="Royal Image Group company logos">
+        <div class="logo-placeholder logo-one"><img src="./pic/pc1.jpg" alt="Royal Image logo" data-logo="pc1"></div>
+        <div class="logo-placeholder"><img src="./pic/pc2.jpg" alt="A.M logo"></div>
+        <div class="logo-placeholder blue-bg-logo"><img src="./pic/pc3.jpg" alt="A&amp;A logo"></div>
+        <div class="logo-placeholder"><img src="./pic/pc4.jpg" alt="R.C logo"></div>
+        <div class="logo-placeholder logo-five"><img src="./pic/pc5.jpg" alt="ASK logo" data-logo="pc5"></div>
+        <div class="logo-placeholder logo-six"><img src="./pic/pc6.jpg" alt="Company logo" data-logo="pc6"></div>
+        <div class="logo-placeholder logo-seven"><img src="./pic/pc7.jpg" alt="Company logo" data-logo="pc7"></div>
+    </div>
 
     <section class="directory-tools" aria-label="Directory search and administration">
-        <label class="search-label" for="directorySearch">Search departments and staff</label>
+        <label for="directorySearch">Search departments and staff</label>
         <input id="directorySearch" type="search" autocomplete="off" placeholder="Search by name, department, or role">
         <div id="searchResults" class="search-results" aria-live="polite" hidden></div>
-
         <section id="adminPanel" class="admin-panel" hidden>
             <h2>Admin tools</h2>
             <p id="adminStatus" class="admin-status" aria-live="polite"></p>
             <form id="loginForm" class="form-grid" hidden>
                 <label>Email<input name="email" type="email" autocomplete="username" required></label>
                 <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
-                <button class="primary-button" type="submit">Sign in</button>
+                <button class="admin-toggle-btn" type="submit">Sign in</button>
             </form>
             <form id="departmentForm" class="form-grid" hidden>
                 <h3>Add a department</h3>
@@ -79,46 +78,45 @@
                         <option value="ask_institute">ASK Practical Institute</option>
                     </select>
                 </label>
-                <button class="primary-button" type="submit">Add department</button>
+                <button class="admin-toggle-btn" type="submit">Add department</button>
             </form>
         </section>
     </section>
 
     <p id="appStatus" class="app-status" role="status" aria-live="polite">Loading the public directory…</p>
 
-    <section class="chart" aria-label="Organizational chart">
-        <div id="leadership" class="leadership"></div>
-        <div id="mainDepartments" class="main-departments"></div>
-        <div class="branch-row">
-            <section class="branch-column tv-column">
-                <h2 class="branch-title"><i class="fas fa-tv" aria-hidden="true"></i> Royal TV Channel</h2>
-                <div class="tv-subgroups">
-                    <div id="tvLeft" class="branch-list"></div>
-                    <div id="tvRight" class="branch-list"></div>
-                </div>
-            </section>
-            <section class="branch-column ask-column">
-                <h2 class="branch-title"><i class="fas fa-graduation-cap" aria-hidden="true"></i> ASK Practical Institute</h2>
-                <div id="askDepartments" class="branch-list"></div>
-            </section>
-        </div>
-        <div class="all-staff-wrapper">
-            <button class="all-staff-btn" id="allStaffButton" type="button">
-                <i class="fas fa-users-line" aria-hidden="true"></i> All Staff
-            </button>
-        </div>
-        <p id="emptyChartMessage" class="empty-message" hidden>No departments have been added yet. An administrator can sign in to create the chart.</p>
-    </section>
+    <div class="top-chain" id="leadership"></div>
+    <div class="yellow-bar-container" id="mainDepartments"></div>
 
+    <div class="branch-row">
+        <div class="branch-column tv-column">
+            <div class="branch-title"><i class="fas fa-tv"></i> Royal TV Channel</div>
+            <div class="tv-subgroups">
+                <div class="branch-column department-list" id="tvLeft"></div>
+                <div class="branch-column department-list" id="tvRight"></div>
+            </div>
+        </div>
+        <div class="branch-column ask-column">
+            <div class="branch-title"><i class="fas fa-graduation-cap"></i> ASK Practical Institute</div>
+            <div class="department-list" id="askDepartments"></div>
+        </div>
+    </div>
+
+    <div class="all-staff-wrapper">
+        <button class="all-staff-btn" id="allStaffButton" type="button">
+            <i class="fas fa-users-line" aria-hidden="true"></i> All Staff
+        </button>
+    </div>
+    <p id="emptyChartMessage" class="empty-message" hidden>No departments have been added yet. An administrator can sign in to create the chart.</p>
     <p class="privacy-note">Department and staff directory information is public. Sign-in is required to make changes.</p>
 </main>
 
 <div id="infoModal" class="modal" hidden>
-    <section class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-        <button class="close-btn" id="closeModalButton" type="button" aria-label="Close">×</button>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <button class="close-btn" id="closeModalButton" type="button" aria-label="Close">✕</button>
         <h2 id="modalTitle" class="modal-title"></h2>
         <div id="modalBody" class="modal-body"></div>
-    </section>
+    </div>
 </div>
 
 <noscript>This directory needs JavaScript to load the latest public organization data.</noscript>
