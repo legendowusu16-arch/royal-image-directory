@@ -29,6 +29,32 @@ create table public.admin_users (
     created_at timestamptz not null default now()
 );
 
+create unique index if not exists departments_name_key
+    on public.departments (name);
+
+insert into public.departments (name, position_type, sort_order)
+values
+    ('BOARD OF DIRECTORS', 'director', 10),
+    ('MANAGING DIRECTOR', 'director', 20),
+    ('GENERAL MANAGER', 'director', 30),
+    ('FINANCE ACCOUNTANT', 'core', 10),
+    ('ROYAL TV GENERAL MANAGER', 'core', 20),
+    ('HR MANAGER', 'core', 30),
+    ('RICHCITY & ESTATES MANAGER', 'core', 40),
+    ('A&A TRAVEL & TOURS MANAGER', 'core', 50),
+    ('ASK FOODS MANAGERS', 'core', 60),
+    ('A&A DRIVING SCH MANAGER', 'core', 70),
+    ('PROGRAMS', 'tv_left', 10),
+    ('CLIENT SERVICE MANAGER', 'tv_left', 20),
+    ('MM', 'tv_left', 30),
+    ('PRODUCTION MANAGER', 'tv_right', 10),
+    ('HEAD OF IT BOP', 'tv_right', 20),
+    ('STUDIO MANAGER', 'tv_right', 30),
+    ('PROPRIETOR', 'ask_institute', 10),
+    ('HEAD OF SCHOOL', 'ask_institute', 20),
+    ('TEACHERS', 'ask_institute', 30)
+on conflict (name) do nothing;
+
 alter table public.departments enable row level security;
 alter table public.staff enable row level security;
 alter table public.department_members enable row level security;

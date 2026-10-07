@@ -2,7 +2,7 @@
 
 This project publishes its static PWA from `site/` using GitHub Pages. Supabase supplies the online database and administrator sign-in. The GitHub Pages workflow publishes only `site/`; the legacy PHP files are not deployed. Once published, the live app does not need XAMPP or the local computer to stay on.
 
-The directory data is intentionally blank for the cloud setup. Department, staff, and member records can be added after an administrator signs in.
+The schema preloads the full set of department buttons used by the existing organizational chart. Manager names, staff, and department members start empty and can be added after an administrator signs in.
 
 ## 1. Create the Supabase project
 
