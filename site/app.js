@@ -659,7 +659,9 @@ async function initialize() {
     }
 
     try {
-        supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: { flowType: 'implicit' }
+        });
         supabase.auth.onAuthStateChange(event => {
             if (event === 'PASSWORD_RECOVERY') {
                 passwordRecoveryEventReceived = true;
