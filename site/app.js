@@ -62,7 +62,9 @@ let members = [];
 let isAdmin = false;
 let currentSession = null;
 let passwordRecoveryEventReceived = false;
-const passwordRecoveryLink = new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery';
+const passwordRecoveryLink =
+    new URLSearchParams(window.location.search).has('code') ||
+    new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery';
 
 function setStatus(message, kind = 'info') {
     elements.appStatus.textContent = message;
