@@ -61,6 +61,8 @@ let staff = [];
 let members = [];
 let isAdmin = false;
 let currentSession = null;
+let passwordRecoveryEventReceived = false;
+const passwordRecoveryLink = new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery';
 
 function setStatus(message, kind = 'info') {
     elements.appStatus.textContent = message;
@@ -475,6 +477,13 @@ async function refreshSession(session) {
             : `Signed in as ${session.user.email}, but this account has no administrator access.`;
 }
 
+function showPasswordRecovery() {
+    elements.adminPanel.hidden = false;
+    elements.loginForm.hidden = true;
+    elements.passwordRecoveryForm.hidden = false;
+    elements.adminStatus.textContent = 'Choose a new password for your administrator account.';
+}
+
 elements.adminToggleButton.addEventListener('click', () => {
     elements.adminPanel.hidden = !elements.adminPanel.hidden;
     if (!elements.adminPanel.hidden && !currentSession) {
@@ -531,12 +540,14 @@ elements.passwordRecoveryForm.addEventListener('submit', async event => {
     const submit = elements.passwordRecoveryForm.querySelector('button[type="submit"]');
     submit.disabled = true;
     elements.adminStatus.textContent = 'Updating password…';
+    let passwordUpdated = false;
     try {
         const formData = new FormData(elements.passwordRecoveryForm);
         const { error } = await supabase.auth.updateUser({
             password: String(formData.get('password'))
         });
         if (error) throw error;
+        passwordUpdated = true;
 
         const { data, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) throw sessionError;
@@ -553,7 +564,14 @@ elements.passwordRecoveryForm.addEventListener('submit', async event => {
         }
         await loadData();
     } catch (error) {
-        elements.adminStatus.textContent = `Could not update the password: ${error.message}`;
+        if (passwordUpdated) {
+            elements.passwordRecoveryForm.hidden = true;
+            elements.passwordRecoveryForm.reset();
+            elements.loginForm.hidden = false;
+            elements.adminStatus.textContent = `Password updated. Sign in with your new password. Sign-in check failed: ${error.message}`;
+        } else {
+            elements.adminStatus.textContent = `Could not update the password: ${error.message}`;
+        }
     } finally {
         submit.disabled = false;
     }
@@ -642,15 +660,19 @@ async function initialize() {
         supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         supabase.auth.onAuthStateChange(event => {
             if (event === 'PASSWORD_RECOVERY') {
-                elements.adminPanel.hidden = false;
-                elements.loginForm.hidden = true;
-                elements.passwordRecoveryForm.hidden = false;
-                elements.adminStatus.textContent = 'Choose a new password for your administrator account.';
+                passwordRecoveryEventReceived = true;
+                showPasswordRecovery();
             }
         });
         const { data, error } = await supabase.auth.getSession();
         if (error) throw error;
         await refreshSession(data.session);
+        if (passwordRecoveryEventReceived || (passwordRecoveryLink && data.session)) {
+            showPasswordRecovery();
+        } else if (passwordRecoveryLink) {
+            elements.adminPanel.hidden = false;
+            elements.adminStatus.textContent = 'This password reset link is invalid or expired. Request a new reset email and open its newest link.';
+        }
         await loadData();
         setStatus('Directory loaded. Search departments or staff above.', 'success');
     } catch (error) {
