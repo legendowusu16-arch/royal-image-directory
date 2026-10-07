@@ -146,7 +146,8 @@ function renderSearchResults() {
 
     const results = [];
     departments.forEach(department => {
-        if (`${department.name} ${department.manager_name}`.toLocaleLowerCase().includes(term)) {
+        if (`${department.name} ${displayName(department)} ${department.manager_name}`
+            .toLocaleLowerCase().includes(term)) {
             results.push({
                 type: 'department',
                 id: department.id,
