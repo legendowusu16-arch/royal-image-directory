@@ -53,8 +53,19 @@ self.addEventListener('fetch', event => {
     }
 
     if (APP_SHELL.some(path => new URL(path, self.registration.scope).href === url.href)) {
-        event.respondWith(
-            caches.match(request).then(cached => cached || fetch(request))
-        );
+        event.respondWith((async () => {
+            try {
+                const response = await fetch(request);
+                if (response.ok) {
+                    const cache = await caches.open(CACHE_NAME);
+                    await cache.put(request, response.clone());
+                }
+                return response;
+            } catch (error) {
+                const cached = await caches.match(request);
+                if (cached) return cached;
+                throw error;
+            }
+        })());
     }
 });
