@@ -1,15 +1,20 @@
 # Publish and install the directory
 
-This project publishes its static PWA from `site/` using GitHub Pages. Supabase supplies the online database and administrator sign-in. The GitHub Pages workflow publishes only `site/`; the legacy PHP files are not deployed. Once published, the live app does not need XAMPP or the local computer to stay on.
+The site is hosted on GitHub Pages and uses Supabase for its online database and administrator sign-in. The live app does not need XAMPP or the local computer to stay on.
 
-The schema preloads the full set of department buttons used by the existing organizational chart. Manager names, staff, and department members start empty and can be added after an administrator signs in.
+**Live site:** https://legendowusu16-arch.github.io/royal-image-directory/
 
-## 1. Create the Supabase project
+## Supabase setup
 
-1. Create a Supabase project and save its database password somewhere private.
-2. Open **SQL Editor**, run the contents of [`supabase/schema.sql`](./supabase/schema.sql), and wait for it to finish. This creates the blank tables and row-level security rules.
-3. In **Authentication** settings, turn off public sign-ups. Invite the administrator's email address from the Supabase dashboard and set a password.
-4. In SQL Editor, authorize that invited account. Replace the email with the exact invited address:
+The Supabase project URL and public publishable key are configured in `site/supabase-config.js`. These browser-visible values can be in the public repository; never put a database password, `service_role` key, or other secret there.
+
+The database was initialized in Supabase SQL Editor using `supabase/schema.sql`. It creates the protected tables and seeds all 19 department buttons from the original chart. Manager names, staff, and department members start empty.
+
+To allow a named administrator to edit:
+
+1. In Supabase **Authentication → Sign In / Providers**, turn off public user sign-ups.
+2. In **Authentication → Users**, invite the administrator's email address and have them accept the invite.
+3. In SQL Editor, replace the example with the exact invited email and run:
 
    ```sql
    insert into public.admin_users (user_id)
@@ -17,33 +22,14 @@ The schema preloads the full set of department buttons used by the existing orga
    on conflict (user_id) do nothing;
    ```
 
-   Check that one row was inserted. If it inserted zero rows, verify the email is confirmed and spelled exactly as invited.
-5. Open **Project Settings → API**. Copy the project URL and the publishable key (or legacy `anon` key) into `site/supabase-config.js`:
+   Check that one row was inserted. If it inserted zero rows, verify the invite was accepted and the email matches exactly. The administrator can then sign in on the live site to add staff, members, and manager names.
 
-   ```js
-   export const SUPABASE_URL = 'https://YOUR-PROJECT.supabase.co';
-   export const SUPABASE_ANON_KEY = 'YOUR-PUBLISHABLE-OR-ANON-KEY';
-   ```
+The chart and directory are public and searchable. Only the administrator account explicitly added to `admin_users` can change records; Supabase enforces this with row-level security. Do not store confidential staff information in these public tables.
 
-   These are browser-visible values. Never put the database password, `service_role` key, or another secret in this file or in GitHub Pages.
+## GitHub publishing and desktop install
 
-The directory tables are readable by everyone, as required for a public chart and search engines. Only the invited user IDs listed in `admin_users` can change records; row-level security enforces this in the database, not just in the page. Do not store confidential staff data in these public tables.
+The [GitHub repository](https://github.com/legendowusu16-arch/royal-image-directory) automatically deploys the `site/` directory to [the live app](https://legendowusu16-arch.github.io/royal-image-directory/). The PHP/MySQL files are not used for the hosted app. Push code changes to GitHub to update the site; database edits save directly in Supabase.
 
-## 2. Publish from GitHub
+Open the live HTTPS site in Chrome or Edge and choose **Install app** from the browser menu (or use **Install app** on the page when it appears). The desktop app uses the hosted service and needs an internet connection to fetch current directory data.
 
-1. Create a **public** GitHub repository for this project. GitHub Pages is free for public repositories. Keep the existing project files at the repository root.
-2. Upload/push `.github/workflows/pages.yml`, `site/`, `supabase/`, and `pic/`/`icons/` assets to the repository root. You may include the legacy PHP source for reference, but it is not needed for the Pages site. Never commit database passwords, Supabase service-role keys, or other secrets.
-3. In the repository, open **Settings → Pages** and select **GitHub Actions** as the build and deployment source.
-4. Check the **Actions** tab and wait for **Deploy Royal Image PWA** to complete. The live address will be:
-   - `https://YOUR-USERNAME.github.io/` if the repository is named `YOUR-USERNAME.github.io`
-   - `https://YOUR-USERNAME.github.io/REPOSITORY/` for a project repository
-5. In Supabase **Authentication → URL Configuration**, set the Site URL to the live address and add that exact address as a redirect URL.
-6. Open the live HTTPS address and test administrator sign-in, creating a department, adding staff, search, and sign-out.
-
-The workflow generates `robots.txt`, `sitemap.xml`, and a canonical URL for the repository's GitHub Pages address. To help people find it through Google, add the public site to [Google Search Console](https://search.google.com/search-console), verify ownership, and submit `/sitemap.xml`. Search engines may take days or weeks to index a new site; being deployed does not guarantee a particular search ranking.
-
-## 3. Install it on a desktop
-
-Open the live HTTPS site in a current version of Chrome or Edge. Select **Install desktop app** when it appears, or use the browser menu's **Install app** option. The installed app opens separately from the browser. Keep an internet connection for current chart data, sign-in, and changes; the PWA caches its shell and branding, not private login sessions or database results.
-
-Changes pushed to the repository are published automatically. Directory edits are saved immediately in Supabase and do not require a GitHub update or XAMPP.
+The deployment generates `robots.txt`, `sitemap.xml`, and a canonical URL. To help Google discover the site, add it to [Google Search Console](https://search.google.com/search-console), verify ownership, and submit `https://legendowusu16-arch.github.io/royal-image-directory/sitemap.xml`. Search engines may take time to index a new site; publishing does not guarantee a particular ranking.
