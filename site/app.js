@@ -536,7 +536,8 @@ document.addEventListener('keydown', event => {
 
 async function initialize() {
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-        setStatus('Connect a Supabase project in site/supabase-config.js to load the live directory. See HOSTING.md for setup.', 'error');
+        elements.adminToggleButton.disabled = true;
+        setStatus('The online directory is being set up. Chart and search results will appear after the data service is connected.');
         return;
     }
 
