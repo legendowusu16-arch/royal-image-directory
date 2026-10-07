@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="104" fill="#102a43"/>
+  <path d="M105 196 145 96l88 76 23-110 23 110 88-76 40 100-151-25-151 25Z" fill="#d6a84f"/>
+  <path d="M130 220h252v45H130z" fill="#fff"/>
+  <text x="256" y="408" fill="#fff" font-family="Arial,sans-serif" font-size="176" font-weight="700" text-anchor="middle">R</text>
+</svg>

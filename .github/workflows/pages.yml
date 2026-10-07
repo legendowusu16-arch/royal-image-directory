@@ -1,0 +1,64 @@
+name: Deploy Royal Image PWA
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Copy public image and app-icon assets
+        run: |
+          mkdir -p site/pic site/icons
+          cp pic/*.jpg site/pic/
+          cp icons/app-icon.svg icons/app-icon-192.png icons/app-icon-512.png site/icons/
+
+      - name: Set canonical URL and search-engine files
+        env:
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          owner="${REPOSITORY%%/*}"
+          repository="${REPOSITORY#*/}"
+          if [[ "$repository" == "$owner.github.io" ]]; then
+            site_url="https://${owner}.github.io/"
+          else
+            site_url="https://${owner}.github.io/${repository}/"
+          fi
+          sed -i "s|__SITE_URL__|${site_url}|g" site/index.html
+          if grep -q '__SITE_URL__' site/index.html; then
+            echo "Failed to set the public site URL." >&2
+            exit 1
+          fi
+          printf '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>%s</loc></url></urlset>\n' "$site_url" > site/sitemap.xml
+          printf 'User-agent: *\nAllow: /\nSitemap: %ssitemap.xml\n' "$site_url" > site/robots.txt
+
+      - name: Upload site artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

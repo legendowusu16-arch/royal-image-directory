@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#102a43">
+    <meta name="description" content="Explore the Royal Image Group of Companies organizational structure, departments, and staff directory.">
+    <meta name="robots" content="index, follow">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Royal Image Group — Organizational Structure">
+    <meta property="og:description" content="Explore the Royal Image Group organizational structure, departments, and staff directory.">
+    <meta property="og:url" content="__SITE_URL__">
+    <link rel="canonical" href="__SITE_URL__">
+    <title>Royal Image Group — Organizational Structure</title>
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" href="./icons/app-icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="./icons/app-icon-192.png">
+    <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "Royal Image Group of Companies",
+            "description": "Organizational structure, departments, and staff directory for Royal Image Group.",
+            "url": "__SITE_URL__"
+        }
+    </script>
+</head>
+<body>
+<main class="container">
+    <header class="header">
+        <h1 class="main-title">Royal Image Group of Companies</h1>
+        <p class="sub-title">Organizational Structure</p>
+        <div class="title-divider"></div>
+        <div class="header-actions">
+            <button class="secondary-button" id="installAppButton" type="button" hidden>Install desktop app</button>
+            <button class="secondary-button" id="adminToggleButton" type="button">Admin sign in</button>
+            <button class="secondary-button" id="signOutButton" type="button" hidden>Sign out</button>
+        </div>
+    </header>
+
+    <section class="logos-container" aria-label="Royal Image Group company logos">
+        <img src="./pic/pc1.jpg" alt="Royal Image logo">
+        <img src="./pic/pc2.jpg" alt="A.M logo">
+        <img src="./pic/pc3.jpg" alt="A&amp;A logo">
+        <img src="./pic/pc4.jpg" alt="R.C logo">
+        <img src="./pic/pc5.jpg" alt="ASK logo">
+        <img src="./pic/pc6.jpg" alt="Company logo">
+        <img src="./pic/pc7.jpg" alt="Company logo">
+    </section>
+
+    <section class="directory-tools" aria-label="Directory search and administration">
+        <label class="search-label" for="directorySearch">Search departments and staff</label>
+        <input id="directorySearch" type="search" autocomplete="off" placeholder="Search by name, department, or role">
+        <div id="searchResults" class="search-results" aria-live="polite" hidden></div>
+
+        <section id="adminPanel" class="admin-panel" hidden>
+            <h2>Admin tools</h2>
+            <p id="adminStatus" class="admin-status" aria-live="polite"></p>
+            <form id="loginForm" class="form-grid" hidden>
+                <label>Email<input name="email" type="email" autocomplete="username" required></label>
+                <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+                <button class="primary-button" type="submit">Sign in</button>
+            </form>
+            <form id="departmentForm" class="form-grid" hidden>
+                <h3>Add a department</h3>
+                <label>Department name<input name="name" maxlength="150" required></label>
+                <label>Chart section
+                    <select name="position_type" required>
+                        <option value="director">Leadership</option>
+                        <option value="core">Main departments</option>
+                        <option value="sub">Main departments (secondary)</option>
+                        <option value="tv_left">Royal TV Channel (left)</option>
+                        <option value="tv_right">Royal TV Channel (right)</option>
+                        <option value="ask_institute">ASK Practical Institute</option>
+                    </select>
+                </label>
+                <button class="primary-button" type="submit">Add department</button>
+            </form>
+        </section>
+    </section>
+
+    <p id="appStatus" class="app-status" role="status" aria-live="polite">Loading the public directory…</p>
+
+    <section class="chart" aria-label="Organizational chart">
+        <div id="leadership" class="leadership"></div>
+        <div id="mainDepartments" class="main-departments"></div>
+        <div class="branch-row">
+            <section class="branch-column tv-column">
+                <h2 class="branch-title"><i class="fas fa-tv" aria-hidden="true"></i> Royal TV Channel</h2>
+                <div class="tv-subgroups">
+                    <div id="tvLeft" class="branch-list"></div>
+                    <div id="tvRight" class="branch-list"></div>
+                </div>
+            </section>
+            <section class="branch-column ask-column">
+                <h2 class="branch-title"><i class="fas fa-graduation-cap" aria-hidden="true"></i> ASK Practical Institute</h2>
+                <div id="askDepartments" class="branch-list"></div>
+            </section>
+        </div>
+        <div class="all-staff-wrapper">
+            <button class="all-staff-btn" id="allStaffButton" type="button">
+                <i class="fas fa-users-line" aria-hidden="true"></i> All Staff
+            </button>
+        </div>
+        <p id="emptyChartMessage" class="empty-message" hidden>No departments have been added yet. An administrator can sign in to create the chart.</p>
+    </section>
+
+    <p class="privacy-note">Department and staff directory information is public. Sign-in is required to make changes.</p>
+</main>
+
+<div id="infoModal" class="modal" hidden>
+    <section class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <button class="close-btn" id="closeModalButton" type="button" aria-label="Close">×</button>
+        <h2 id="modalTitle" class="modal-title"></h2>
+        <div id="modalBody" class="modal-body"></div>
+    </section>
+</div>
+
+<noscript>This directory needs JavaScript to load the latest public organization data.</noscript>
+<script type="module" src="./app.js"></script>
+<script src="./pwa.js" defer></script>
+</body>
+</html>
