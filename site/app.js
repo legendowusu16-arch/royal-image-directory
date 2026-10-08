@@ -64,6 +64,7 @@ let staff = [];
 let members = [];
 let isAdmin = false;
 let currentSession = null;
+let contactFieldsAvailable = true;
 
 function setStatus(message, kind = 'info') {
     elements.appStatus.textContent = message;
@@ -469,11 +470,84 @@ function openDepartment(departmentId) {
     }
     elements.modalBody.append(summary);
 
+    const contactSection = makeElement('section', 'modal-section');
+    contactSection.append(makeElement('h3', '', 'Contact details'));
+    if (department.contact_email || department.contact_phone) {
+        const contacts = makeElement('div', 'department-contacts');
+        if (department.contact_email) {
+            const emailLink = makeElement('a', '', department.contact_email);
+            emailLink.href = `mailto:${department.contact_email}`;
+            emailLink.setAttribute('aria-label', `Email ${department.contact_email}`);
+            contacts.append(emailLink);
+        }
+        if (department.contact_phone) {
+            const phoneLink = makeElement('a', '', department.contact_phone);
+            phoneLink.href = `tel:${department.contact_phone.replace(/[^\d+]/g, '')}`;
+            phoneLink.setAttribute('aria-label', `Call ${department.contact_phone}`);
+            contacts.append(phoneLink);
+        }
+        contactSection.append(contacts);
+    } else if (!contactFieldsAvailable) {
+        contactSection.append(makeElement(
+            'p',
+            'modal-message',
+            'Email and phone fields are not enabled in the database yet.'
+        ));
+    } else {
+        contactSection.append(makeElement('p', 'modal-message', 'No email or phone number has been added.'));
+    }
+    elements.modalBody.append(contactSection);
+
     const memberSection = makeElement('section', 'modal-section');
     appendMemberList(memberSection, department);
     elements.modalBody.append(memberSection);
 
     if (!isAdmin) return;
+
+    const contactForm = makeElement('form', 'modal-form');
+    contactForm.append(makeElement('h3', '', 'Edit contact details'));
+    contactForm.append(makeFormField('Email address', 'contact_email', {
+        value: department.contact_email || '',
+        type: 'email',
+        maxLength: 254,
+        required: false
+    }));
+    contactForm.append(makeFormField('Phone number', 'contact_phone', {
+        value: department.contact_phone || '',
+        type: 'tel',
+        maxLength: 40,
+        required: false
+    }));
+    const saveContactsButton = makeElement('button', 'primary-button', 'Save contact details');
+    saveContactsButton.type = 'submit';
+    saveContactsButton.disabled = !contactFieldsAvailable;
+    contactForm.append(saveContactsButton);
+    const contactMessage = addMessage(contactForm, '');
+    if (!contactFieldsAvailable) {
+        contactMessage.textContent = 'Run supabase/add_department_contact_fields.sql in Supabase SQL Editor to enable contact details.';
+    }
+    contactForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        saveContactsButton.disabled = true;
+        contactMessage.textContent = 'Saving…';
+        try {
+            const formData = new FormData(contactForm);
+            const { error } = await supabase.from('departments').update({
+                contact_email: String(formData.get('contact_email')).trim(),
+                contact_phone: String(formData.get('contact_phone')).trim()
+            }).eq('id', department.id);
+            if (error) throw error;
+            await loadData();
+            openDepartment(department.id);
+            setStatus('Contact details saved.', 'success');
+        } catch (error) {
+            contactMessage.textContent = `Could not save contact details: ${error.message}`;
+            contactMessage.dataset.kind = 'error';
+        } finally {
+            saveContactsButton.disabled = false;
+        }
+    });
+    elements.modalBody.append(contactForm);
 
     const managerSection = makeElement('section', 'modal-section');
     managerSection.append(makeElement('h3', '', 'Manager name'));
@@ -653,11 +727,23 @@ function openStaffDirectory() {
 }
 
 async function loadData() {
-    const [departmentResult, staffResult, memberResult] = await Promise.all([
-        supabase.from('departments').select('id,name,manager_name,position_type,sort_order'),
+    let [departmentResult, staffResult, memberResult] = await Promise.all([
+        supabase.from('departments').select('id,name,manager_name,contact_email,contact_phone,position_type,sort_order'),
         supabase.from('staff').select('id,name,role'),
         supabase.from('department_members').select('id,department_id,name,role')
     ]);
+    contactFieldsAvailable = true;
+    if (
+        departmentResult.error &&
+        /contact_email|contact_phone/i.test(departmentResult.error.message)
+    ) {
+        contactFieldsAvailable = false;
+        [departmentResult, staffResult, memberResult] = await Promise.all([
+            supabase.from('departments').select('id,name,manager_name,position_type,sort_order'),
+            supabase.from('staff').select('id,name,role'),
+            supabase.from('department_members').select('id,department_id,name,role')
+        ]);
+    }
     const failedResult = [departmentResult, staffResult, memberResult].find(result => result.error);
     if (failedResult) throw failedResult.error;
 

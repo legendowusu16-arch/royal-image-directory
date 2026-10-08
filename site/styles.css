@@ -630,6 +630,8 @@
         .modal:not([hidden]) { display: flex; }
         .modal-section, .modal-form { display: grid; gap: 8px; }
         .modal-section h3, .modal-form h3 { margin: 0; color: #102a43; font-size: 13px; text-transform: uppercase; }
+        .department-contacts { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+        .department-contacts a { color: #164f73; font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
         .admin-manage-section { display: grid; gap: 8px; }
         .admin-manage-section h3 { color: #102a43; font-size: 13px; text-transform: uppercase; }
         .admin-manage-section p { color: #52677b; font-size: 12px; }
