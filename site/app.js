@@ -13,6 +13,7 @@ const elements = {
     adminDepartmentList: document.getElementById('adminDepartmentList'),
     directorySearch: document.getElementById('directorySearch'),
     searchResults: document.getElementById('searchResults'),
+    passwordForm: document.getElementById('passwordForm'),
     leadership: document.getElementById('leadership'),
     mainDepartments: document.getElementById('mainDepartments'),
     tvLeft: document.getElementById('tvLeft'),
@@ -801,6 +802,7 @@ async function refreshSession(session) {
     }
 
     elements.loginForm.hidden = Boolean(session);
+    elements.passwordForm.hidden = !isAdmin;
     elements.departmentForm.hidden = !isAdmin;
     elements.adminDepartmentManagement.hidden = !isAdmin;
     elements.signOutButton.hidden = !session;
@@ -825,21 +827,47 @@ elements.loginForm.addEventListener('submit', async event => {
     event.preventDefault();
     const submit = elements.loginForm.querySelector('button[type="submit"]');
     submit.disabled = true;
-    elements.adminStatus.textContent = 'Sending a secure sign-in link…';
+    elements.adminStatus.textContent = 'Signing in…';
     try {
         const formData = new FormData(elements.loginForm);
         const email = String(formData.get('email')).trim();
-        const { error } = await supabase.auth.signInWithOtp({
+        const password = String(formData.get('password'));
+        const { data, error } = await supabase.auth.signInWithPassword({
             email,
-            options: {
-                shouldCreateUser: false,
-                emailRedirectTo: `${window.location.origin}${window.location.pathname}`
-            }
+            password
         });
         if (error) throw error;
-        elements.adminStatus.textContent = `Check ${email}'s inbox and spam folder, then click the sign-in link. The directory will open with you signed in.`;
+        elements.loginForm.reset();
+        elements.adminPanel.hidden = false;
+        await refreshSession(data.session);
+        elements.adminStatus.textContent = `Signed in as ${email}.`;
     } catch (error) {
-        elements.adminStatus.textContent = `Could not send the sign-in link: ${error.message}`;
+        elements.adminStatus.textContent = `Could not sign in: ${error.message}`;
+    } finally {
+        submit.disabled = false;
+    }
+});
+
+elements.passwordForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    const submit = elements.passwordForm.querySelector('button[type="submit"]');
+    const formData = new FormData(elements.passwordForm);
+    const password = String(formData.get('password'));
+    const passwordConfirmation = String(formData.get('password_confirmation'));
+    if (password !== passwordConfirmation) {
+        elements.adminStatus.textContent = 'The new passwords do not match.';
+        return;
+    }
+
+    submit.disabled = true;
+    elements.adminStatus.textContent = 'Updating your password…';
+    try {
+        const { error } = await supabase.auth.updateUser({ password });
+        if (error) throw error;
+        elements.passwordForm.reset();
+        elements.adminStatus.textContent = 'Your password has been changed.';
+    } catch (error) {
+        elements.adminStatus.textContent = `Could not change your password: ${error.message}`;
     } finally {
         submit.disabled = false;
     }

@@ -5,7 +5,7 @@ Public organizational chart and staff directory, published as an installable Pro
 - **Live site:** [Royal Image Group Directory](https://legendowusu16-arch.github.io/royal-image-directory/)
 - **Website:** GitHub Pages serves the static files in [`site/`](./site/).
 - **Data and administrator sign-in:** Supabase, protected with PostgreSQL row-level security.
-- **Admin login:** Passwordless email link for explicitly authorized administrator accounts.
+- **Admin login:** Email and password for explicitly authorized administrator accounts.
 - **Desktop install:** Open the deployed HTTPS site in Chrome or Edge and choose **Install desktop app**.
 - **Deployment and setup:** Follow [`HOSTING.md`](./HOSTING.md).
 

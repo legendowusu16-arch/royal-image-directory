@@ -12,11 +12,11 @@ The database was initialized in Supabase SQL Editor using `supabase/schema.sql`.
 
 For an existing database, run [`supabase/add_department_contact_fields.sql`](./supabase/add_department_contact_fields.sql) and [`supabase/manage_directory_names.sql`](./supabase/manage_directory_names.sql) in Supabase SQL Editor. The first adds the email and phone fields; the second allows administrators to edit names, clear manager names, and delete staff, department members, and departments. Deleting a department also deletes its members. These one-time SQL steps are required for all hosted features. The three Royal TV role buttons are shown while the directory loads; after an administrator signs in, their records are added or repositioned automatically. Run [`supabase/add_royal_tv_departments.sql`](./supabase/add_royal_tv_departments.sql) to reposition roles directly in SQL Editor. Royal TV Accra Manager appears below Studio Managers. New installations get these fields, permissions, and roles from `schema.sql`.
 
-To allow a named administrator to edit:
+To give yourself and a manager separate administrator accounts:
 
-1. In Supabase **Authentication → Sign In / Providers**, turn off public user sign-ups.
-2. In **Authentication → Users**, invite the administrator's email address and have them accept the invite.
-3. In SQL Editor, replace the example with the exact invited email and run:
+1. In Supabase **Authentication → Sign In / Providers**, enable the Email provider and turn off public user sign-ups.
+2. In **Authentication → Users**, create a user for each person with that person's email and a temporary password. Give each person their own account; do not share passwords.
+3. In SQL Editor, replace the example with each person's exact email and run this once for each account:
 
    ```sql
    insert into public.admin_users (user_id)
@@ -24,9 +24,9 @@ To allow a named administrator to edit:
    on conflict (user_id) do nothing;
    ```
 
-   Check that one row was inserted. If it inserted zero rows, verify the invite was accepted and the email matches exactly. The administrator signs in on the live site without a password: click **Admin sign in**, enter the authorized email, click **Email me a sign-in link**, then open the newest email link. After returning to the directory, open **Admin tools** to see the department management list. Choose a department to edit its name, contact email and phone, change or clear its manager, and add, rename, or delete members. Visitors can tap the email or phone displayed in a department's details. The **All Staff** button opens staff name and role editing/deletion controls. Public sign-ups remain disabled, and only authorized administrator accounts can edit.
+   Check that one row was inserted for that email. If it inserted zero rows, verify the account exists and the email matches exactly. The user signs in on the hosted site by clicking **Admin sign in**, then entering their email and password. After signing in, they can set their own private password from **Admin tools → Change your password**. Open **Admin tools** to see the department management list. Each authorized administrator can edit every department, contact, manager, member, and staff record; access is not restricted to a particular department. Public sign-ups remain disabled, and only accounts explicitly added to `admin_users` can make changes.
 
-The chart and directory are public and searchable. Only the administrator account explicitly added to `admin_users` can change records; Supabase enforces this with row-level security. Do not store confidential staff information in these public tables.
+The chart and directory are public and searchable. Only accounts explicitly added to `admin_users` can change records; Supabase enforces this with row-level security. Do not store confidential staff information in these public tables.
 
 ## GitHub publishing and desktop install
 
