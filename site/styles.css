@@ -119,12 +119,11 @@
         }
 
         .top-chain {
-            display: flex;
-            flex-direction: row;
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             align-items: center;
-            justify-content: center;
+            justify-items: center;
             text-align: center;
-            flex-wrap: wrap;
             width: 100%;
             gap: 10px;
             margin-bottom: 18px;
@@ -140,7 +139,7 @@
             font-size: 13px;
             letter-spacing: 1.5px;
             text-transform: uppercase;
-            width: min(280px, calc(100% - 30px));
+            width: 100%;
             text-align: center;
             color: #ff9e40;
             border: 2px solid #ff8a1d;
@@ -152,7 +151,7 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            min-width: min(220px, 100%);
+            min-width: 0;
             margin: 0;
         }
         .top-box i { color: #ff9e40; font-size: 14px; transition: transform 0.35s; }
@@ -163,10 +162,7 @@
         }
         .top-box:hover i { transform: scale(1.25) rotate(-8deg); color: #ffb067; }
         .connector-vertical {
-            width: 3px;
-            height: 20px;
-            background: linear-gradient(180deg, #ffb067, #ff8a1d);
-            border-radius: 2px;
+            display: none;
         }
 
         .yellow-bar-container {
@@ -551,6 +547,7 @@
         @media (max-width: 500px) {
             .yellow-bar-container { grid-template-columns: repeat(2, 1fr); }
             .container { padding: 30px 18px; }
+            .top-chain { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
         .install-app-btn {
             display: none;
