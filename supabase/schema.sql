@@ -47,12 +47,12 @@ values
     ('PROGRAMS', 'tv_left', 10),
     ('CLIENT SERVICE MANAGER', 'tv_left', 20),
     ('MM', 'tv_left', 30),
-    ('DIGITAL MARKETER AND BLOGGER', 'tv_left', 40),
-    ('ROYAL TV ACCRA MANAGER', 'tv_left', 50),
+    ('DIGITAL MARKETER AND BLOGGER', 'tv_left', 50),
+    ('ROYAL TV ACCRA MANAGER', 'tv_left', 60),
     ('PRODUCTION MANAGER', 'tv_right', 10),
     ('HEAD OF IT BOP', 'tv_right', 20),
     ('STUDIO MANAGER', 'tv_right', 30),
-    ('HEAD OF IT', 'tv_right', 40),
+    ('HEAD OF IT', 'tv_left', 40),
     ('PROPRIETOR', 'ask_institute', 10),
     ('HEAD OF SCHOOL', 'ask_institute', 20),
     ('TEACHERS', 'ask_institute', 30)
@@ -147,8 +147,8 @@ begin
         raise exception 'Administrator access required';
     end if;
 
-    if p_manager_name is null or char_length(trim(p_manager_name)) not between 1 and 150 then
-        raise exception 'Manager name must contain between 1 and 150 characters';
+    if p_manager_name is null or char_length(trim(p_manager_name)) > 150 then
+        raise exception 'Manager name must not exceed 150 characters';
     end if;
 
     update public.departments
@@ -171,6 +171,9 @@ begin
             insert into public.department_members (department_id, name, role)
             values (p_department_id, trim(p_manager_name), 'Manager');
         end if;
+    elsif trim(p_manager_name) = '' then
+        delete from public.department_members
+        where department_id = p_department_id and role = 'Manager';
     else
         update public.department_members
         set name = trim(p_manager_name)

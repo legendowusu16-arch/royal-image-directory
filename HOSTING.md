@@ -10,7 +10,7 @@ The Supabase project URL and public publishable key are configured in `site/supa
 
 The database was initialized in Supabase SQL Editor using `supabase/schema.sql`. It creates the protected tables and seeds all 22 department buttons, including the three Royal TV roles. Manager names, staff, and department members start empty.
 
-For an existing database, run [`supabase/manage_directory_names.sql`](./supabase/manage_directory_names.sql) in Supabase SQL Editor to allow administrators to edit names and delete staff, department members, and departments. Deleting a department also deletes its members. After the updated site is published, an administrator sign-in automatically adds any missing Royal TV roles. Alternatively, run [`supabase/add_royal_tv_departments.sql`](./supabase/add_royal_tv_departments.sql) in SQL Editor. New installations get these permissions and roles from `schema.sql`.
+For an existing database, run [`supabase/manage_directory_names.sql`](./supabase/manage_directory_names.sql) in Supabase SQL Editor to allow administrators to edit names, clear manager names, and delete staff, department members, and departments. Deleting a department also deletes its members. This one-time SQL step is required for delete actions. The three Royal TV role buttons are shown while the directory loads; after an administrator signs in, their records are added automatically. Alternatively, run [`supabase/add_royal_tv_departments.sql`](./supabase/add_royal_tv_departments.sql) in SQL Editor. New installations get these permissions and roles from `schema.sql`.
 
 To allow a named administrator to edit:
 
@@ -24,13 +24,15 @@ To allow a named administrator to edit:
    on conflict (user_id) do nothing;
    ```
 
-   Check that one row was inserted. If it inserted zero rows, verify the invite was accepted and the email matches exactly. The administrator signs in on the live site without a password: enter the authorized email, click **Email me a sign-in link**, then open the newest email link. The app opens signed in, ready to add or rename departments, add staff and members, and edit manager names. Click a department button to manage its member names; admins can edit or delete existing names there. Public sign-ups remain disabled, and only authorized administrator accounts can edit.
+   Check that one row was inserted. If it inserted zero rows, verify the invite was accepted and the email matches exactly. The administrator signs in on the live site without a password: click **Admin sign in**, enter the authorized email, click **Email me a sign-in link**, then open the newest email link. After returning to the directory, open **Admin tools** to see the department management list. Choose a department to edit its name, change or clear its manager, and add, rename, or delete members. The **All Staff** button opens staff name and role editing/deletion controls. Public sign-ups remain disabled, and only authorized administrator accounts can edit.
 
 The chart and directory are public and searchable. Only the administrator account explicitly added to `admin_users` can change records; Supabase enforces this with row-level security. Do not store confidential staff information in these public tables.
 
 ## GitHub publishing and desktop install
 
 The [GitHub repository](https://github.com/legendowusu16-arch/royal-image-directory) automatically deploys the `site/` directory to [the live app](https://legendowusu16-arch.github.io/royal-image-directory/). The PHP/MySQL files are not used for the hosted app. Push code changes to GitHub to update the site; database edits save directly in Supabase.
+
+The legacy local XAMPP page (`index.php`) adds the three Royal TV roles to its MySQL database when it loads. Open a department button to edit its name, members, or delete the department; open **All Staff** to edit or delete staff. This legacy local page has no administrator sign-in, so use it only on a trusted local machine. The hosted app uses Supabase administrator sign-in instead.
 
 Open the live HTTPS site in Chrome or Edge and choose **Install app** from the browser menu (or use **Install app** on the page when it appears). The desktop app uses the hosted service and needs an internet connection to fetch current directory data.
 

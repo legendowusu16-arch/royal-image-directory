@@ -84,7 +84,11 @@ function displayName(department) {
 function departmentButton(department, className) {
     const button = makeElement('button', className);
     button.type = 'button';
-    button.dataset.departmentId = department.id;
+    if (department.id === undefined) {
+        button.dataset.placeholderDepartment = department.name;
+    } else {
+        button.dataset.departmentId = department.id;
+    }
     const icon = makeElement('i', `fas ${departmentIcons[department.name] || 'fa-folder'}`);
     icon.setAttribute('aria-hidden', 'true');
     button.append(icon, makeElement('span', '', displayName(department)));
@@ -122,14 +126,23 @@ function renderChart() {
 
     ordered
         .filter(department =>
-            department.position_type === 'tv_left' && department.name !== 'MARKETING MANAGER'
+            department.position_type === 'tv_left' &&
+            department.name !== 'MARKETING MANAGER' &&
+            !['HEAD OF IT', 'DIGITAL MARKETER AND BLOGGER', 'ROYAL TV ACCRA MANAGER'].includes(department.name)
         )
         .forEach(department => {
             elements.tvLeft.append(departmentButton(department, 'branch-btn'));
         });
 
+    ['HEAD OF IT', 'DIGITAL MARKETER AND BLOGGER', 'ROYAL TV ACCRA MANAGER'].forEach(name => {
+        const department = ordered.find(item => item.name === name) || { name };
+        elements.tvLeft.append(departmentButton(department, 'branch-btn'));
+    });
+
     ordered
-        .filter(department => department.position_type === 'tv_right')
+        .filter(department =>
+            department.position_type === 'tv_right' && department.name !== 'HEAD OF IT'
+        )
         .forEach(department => {
             elements.tvRight.append(departmentButton(department, 'branch-btn'));
         });
@@ -161,9 +174,9 @@ function renderAdminDepartments() {
 
 async function ensureRoyalTvDepartments() {
     const required = [
-        { name: 'HEAD OF IT', position_type: 'tv_right', sort_order: 40 },
-        { name: 'DIGITAL MARKETER AND BLOGGER', position_type: 'tv_left', sort_order: 40 },
-        { name: 'ROYAL TV ACCRA MANAGER', position_type: 'tv_left', sort_order: 50 }
+        { name: 'HEAD OF IT', position_type: 'tv_left', sort_order: 40 },
+        { name: 'DIGITAL MARKETER AND BLOGGER', position_type: 'tv_left', sort_order: 50 },
+        { name: 'ROYAL TV ACCRA MANAGER', position_type: 'tv_left', sort_order: 60 }
     ];
     const existingNames = new Set(departments.map(department => department.name));
     const missing = required.filter(department => !existingNames.has(department.name));
@@ -456,18 +469,18 @@ function openDepartment(departmentId) {
         required: false
     });
     managerSection.append(managerField);
-    const saveManagerButton = makeElement('button', 'primary-button', 'Save manager');
+    const managerActions = makeElement('div', 'record-actions');
+    const saveManagerButton = makeElement('button', 'primary-button', 'Save manager name');
     saveManagerButton.type = 'button';
-    managerSection.append(saveManagerButton);
+    const clearManagerButton = makeElement('button', 'secondary-button danger-button', 'Clear manager name');
+    clearManagerButton.type = 'button';
+    clearManagerButton.disabled = !department.manager_name;
+    managerActions.append(saveManagerButton, clearManagerButton);
+    managerSection.append(managerActions);
     const managerMessage = addMessage(managerSection, '');
-    saveManagerButton.addEventListener('click', async () => {
-        const managerName = managerField.querySelector('input').value.trim();
-        if (!managerName) {
-            managerMessage.textContent = 'Enter a manager name before saving.';
-            managerMessage.dataset.kind = 'error';
-            return;
-        }
+    const saveManagerName = async managerName => {
         saveManagerButton.disabled = true;
+        clearManagerButton.disabled = true;
         managerMessage.textContent = 'Saving…';
         try {
             const { error } = await supabase.rpc('set_department_manager', {
@@ -477,13 +490,20 @@ function openDepartment(departmentId) {
             if (error) throw error;
             await loadData();
             openDepartment(department.id);
-            setStatus('Manager details saved.', 'success');
+            setStatus(managerName ? 'Manager name saved.' : 'Manager name cleared.', 'success');
         } catch (error) {
-            managerMessage.textContent = `Could not save manager: ${error.message}`;
+            managerMessage.textContent = `Could not ${managerName ? 'save' : 'clear'} manager name: ${error.message}`;
             managerMessage.dataset.kind = 'error';
         } finally {
             saveManagerButton.disabled = false;
+            clearManagerButton.disabled = false;
         }
+    };
+    saveManagerButton.addEventListener('click', () => {
+        saveManagerName(managerField.querySelector('input').value.trim());
+    });
+    clearManagerButton.addEventListener('click', () => {
+        if (window.confirm('Clear this manager name?')) saveManagerName('');
     });
     elements.modalBody.append(managerSection);
 
@@ -517,6 +537,50 @@ function openDepartment(departmentId) {
         }
     });
     elements.modalBody.append(addMemberForm);
+}
+
+function openUnconfiguredDepartment(name) {
+    const department = {
+        name,
+        position_type: 'tv_left'
+    };
+    openModal(`${displayName(department)} details`);
+    const section = makeElement('section', 'modal-section');
+    section.append(makeElement('h3', '', 'Department button'));
+    section.append(makeElement('p', '', displayName(department)));
+    section.append(makeElement(
+        'p',
+        'modal-message',
+        'This new role is visible, but it is not saved in the directory yet. An authorized administrator must sign in to activate editing and member management.'
+    ));
+    if (isAdmin) {
+        const activate = makeElement('button', 'primary-button', 'Add this role to the directory');
+        activate.type = 'button';
+        activate.addEventListener('click', async () => {
+            activate.disabled = true;
+            try {
+                await ensureRoyalTvDepartments();
+                openDepartment(departments.find(item => item.name === name).id);
+                setStatus('Royal TV roles added to the directory.', 'success');
+            } catch (error) {
+                addMessage(section, `Could not add this role: ${error.message}`, 'error');
+                activate.disabled = false;
+            }
+        });
+        section.append(activate);
+    } else {
+        const signIn = makeElement('button', 'primary-button', 'Administrator sign in');
+        signIn.type = 'button';
+        signIn.addEventListener('click', () => {
+            closeModal();
+            elements.adminPanel.hidden = false;
+            elements.loginForm.hidden = false;
+            elements.loginForm.querySelector('input').focus();
+            elements.adminPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+        section.append(signIn);
+    }
+    elements.modalBody.append(section);
 }
 
 function openStaffDirectory() {
@@ -697,6 +761,11 @@ elements.searchResults.addEventListener('click', event => {
 });
 
 document.querySelector('.container').addEventListener('click', event => {
+    const placeholder = event.target.closest('button[data-placeholder-department]');
+    if (placeholder) {
+        openUnconfiguredDepartment(placeholder.dataset.placeholderDepartment);
+        return;
+    }
     const button = event.target.closest('button[data-department-id]');
     if (button) openDepartment(button.dataset.departmentId);
 });
