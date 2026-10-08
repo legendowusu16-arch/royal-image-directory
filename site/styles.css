@@ -124,7 +124,7 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            flex-wrap: nowrap;
+            flex-wrap: wrap;
             width: 100%;
             gap: 10px;
             margin-bottom: 18px;
@@ -152,8 +152,8 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            min-width: 220px;
-            margin: 0 auto;
+            min-width: min(220px, 100%);
+            margin: 0;
         }
         .top-box i { color: #ff9e40; font-size: 14px; transition: transform 0.35s; }
         .top-box:hover {

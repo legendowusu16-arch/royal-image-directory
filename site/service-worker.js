@@ -1,4 +1,4 @@
-const CACHE_NAME = 'royal-image-pages-v9';
+const CACHE_NAME = 'royal-image-pages-v10';
 const APP_SHELL = [
     './',
     './index.html',

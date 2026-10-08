@@ -38,10 +38,9 @@ insert into public.departments (name, position_type, sort_order)
 values
     ('BOARD OF DIRECTORS', 'director', 10),
     ('MANAGING DIRECTOR', 'director', 20),
-    ('GENERAL MANAGER', 'director', 30),
-    ('FINANCE ACCOUNTANT', 'core', 10),
+    ('HR MANAGER', 'director', 30),
+    ('FINANCE ACCOUNTANT', 'director', 40),
     ('ROYAL TV GENERAL MANAGER', 'core', 20),
-    ('HR MANAGER', 'core', 30),
     ('RICHCITY & ESTATES MANAGER', 'core', 40),
     ('A&A TRAVEL & TOURS MANAGER', 'core', 50),
     ('ASK FOODS MANAGERS', 'core', 60),

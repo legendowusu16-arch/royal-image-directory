@@ -28,7 +28,6 @@ const elements = {
 const departmentIcons = {
     'BOARD OF DIRECTORS': 'fa-crown',
     'MANAGING DIRECTOR': 'fa-user-tie',
-    'GENERAL MANAGER': 'fa-briefcase',
     'FINANCE ACCOUNTANT': 'fa-calculator',
     'ROYAL TV GENERAL MANAGER': 'fa-tv',
     'HEAD OF IT': 'fa-server',
@@ -103,10 +102,30 @@ function renderChart() {
     elements.tvRight.replaceChildren();
     elements.askDepartments.replaceChildren();
 
-    const ordered = [...departments].sort((a, b) =>
-        a.sort_order - b.sort_order || a.id - b.id
-    );
-    const leaders = ordered.filter(department => department.position_type === 'director');
+    const leadershipOrder = [
+        'BOARD OF DIRECTORS',
+        'MANAGING DIRECTOR',
+        'HR MANAGER',
+        'FINANCE ACCOUNTANT'
+    ];
+    const ordered = [...departments]
+        .filter(department => department.name !== 'GENERAL MANAGER')
+        .sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
+    const leaders = ordered
+        .filter(department =>
+            department.position_type === 'director' ||
+            ['HR MANAGER', 'FINANCE ACCOUNTANT'].includes(department.name)
+        )
+        .sort((a, b) => {
+            const aPosition = leadershipOrder.indexOf(a.name);
+            const bPosition = leadershipOrder.indexOf(b.name);
+            if (aPosition !== -1 || bPosition !== -1) {
+                if (aPosition === -1) return 1;
+                if (bPosition === -1) return -1;
+                return aPosition - bPosition;
+            }
+            return a.sort_order - b.sort_order || a.id - b.id;
+        });
     leaders.forEach((department, index) => {
         if (index > 0) {
             const connector = makeElement('span', 'connector-vertical');
@@ -119,7 +138,8 @@ function renderChart() {
     ordered
         .filter(department =>
             ['core', 'sub'].includes(department.position_type) &&
-            !['PROGRAMS MANAGER', 'MARKETING MANAGER'].includes(department.name)
+            !['PROGRAMS MANAGER', 'MARKETING MANAGER', 'HR MANAGER', 'FINANCE ACCOUNTANT']
+                .includes(department.name)
         )
         .forEach(department => {
             elements.mainDepartments.append(departmentButton(department, 'yellow-bar-btn'));
