@@ -8,8 +8,6 @@ const elements = {
     adminToggleButton: document.getElementById('adminToggleButton'),
     signOutButton: document.getElementById('signOutButton'),
     loginForm: document.getElementById('loginForm'),
-    forgotPasswordButton: document.getElementById('forgotPasswordButton'),
-    passwordRecoveryForm: document.getElementById('passwordRecoveryForm'),
     departmentForm: document.getElementById('departmentForm'),
     directorySearch: document.getElementById('directorySearch'),
     searchResults: document.getElementById('searchResults'),
@@ -61,10 +59,6 @@ let staff = [];
 let members = [];
 let isAdmin = false;
 let currentSession = null;
-let passwordRecoveryEventReceived = false;
-const passwordRecoveryLink =
-    new URLSearchParams(window.location.search).has('code') ||
-    new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery';
 
 function setStatus(message, kind = 'info') {
     elements.appStatus.textContent = message;
@@ -479,13 +473,6 @@ async function refreshSession(session) {
             : `Signed in as ${session.user.email}, but this account has no administrator access.`;
 }
 
-function showPasswordRecovery() {
-    elements.adminPanel.hidden = false;
-    elements.loginForm.hidden = true;
-    elements.passwordRecoveryForm.hidden = false;
-    elements.adminStatus.textContent = 'Choose a new password for your administrator account.';
-}
-
 elements.adminToggleButton.addEventListener('click', () => {
     elements.adminPanel.hidden = !elements.adminPanel.hidden;
     if (!elements.adminPanel.hidden && !currentSession) {
@@ -498,82 +485,21 @@ elements.loginForm.addEventListener('submit', async event => {
     event.preventDefault();
     const submit = elements.loginForm.querySelector('button[type="submit"]');
     submit.disabled = true;
-    elements.adminStatus.textContent = 'Signing in…';
+    elements.adminStatus.textContent = 'Sending a secure sign-in link…';
     try {
         const formData = new FormData(elements.loginForm);
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email: String(formData.get('email')).trim(),
-            password: String(formData.get('password'))
+        const email = String(formData.get('email')).trim();
+        const { error } = await supabase.auth.signInWithOtp({
+            email,
+            options: {
+                shouldCreateUser: false,
+                emailRedirectTo: `${window.location.origin}${window.location.pathname}`
+            }
         });
         if (error) throw error;
-        await refreshSession(data.session);
-        elements.loginForm.reset();
-        if (isAdmin) setStatus('Administrator signed in.', 'success');
-        else setStatus('Signed in, but this account is not authorized to edit the directory.', 'error');
-        await loadData();
+        elements.adminStatus.textContent = `Check ${email}'s inbox and spam folder, then click the sign-in link. The directory will open with you signed in.`;
     } catch (error) {
-        elements.adminStatus.textContent = `Sign-in failed: ${error.message}`;
-    } finally {
-        submit.disabled = false;
-    }
-});
-
-elements.forgotPasswordButton.addEventListener('click', async () => {
-    const emailInput = elements.loginForm.querySelector('input[name="email"]');
-    if (!emailInput.reportValidity()) return;
-
-    elements.forgotPasswordButton.disabled = true;
-    elements.adminStatus.textContent = 'Sending password reset email…';
-    try {
-        const { error } = await supabase.auth.resetPasswordForEmail(emailInput.value.trim(), {
-            redirectTo: `${window.location.origin}${window.location.pathname}`
-        });
-        if (error) throw error;
-        elements.adminStatus.textContent = 'If an account exists for that email, a password reset link has been sent. Check your inbox and spam folder.';
-    } catch (error) {
-        elements.adminStatus.textContent = `Could not send the password reset email: ${error.message}`;
-    } finally {
-        elements.forgotPasswordButton.disabled = false;
-    }
-});
-
-elements.passwordRecoveryForm.addEventListener('submit', async event => {
-    event.preventDefault();
-    const submit = elements.passwordRecoveryForm.querySelector('button[type="submit"]');
-    submit.disabled = true;
-    elements.adminStatus.textContent = 'Updating password…';
-    let passwordUpdated = false;
-    try {
-        const formData = new FormData(elements.passwordRecoveryForm);
-        const { error } = await supabase.auth.updateUser({
-            password: String(formData.get('password'))
-        });
-        if (error) throw error;
-        passwordUpdated = true;
-
-        const { data, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
-        await refreshSession(data.session);
-        elements.passwordRecoveryForm.hidden = true;
-        elements.passwordRecoveryForm.reset();
-        if (isAdmin) {
-            elements.adminStatus.textContent = 'Password updated. You are signed in as an administrator.';
-            setStatus('Administrator signed in. You can now edit the directory.', 'success');
-        } else {
-            elements.adminStatus.textContent = 'Password updated. Sign in with your new password to continue.';
-            elements.loginForm.hidden = false;
-            setStatus('Password updated. Sign in to continue.', 'success');
-        }
-        await loadData();
-    } catch (error) {
-        if (passwordUpdated) {
-            elements.passwordRecoveryForm.hidden = true;
-            elements.passwordRecoveryForm.reset();
-            elements.loginForm.hidden = false;
-            elements.adminStatus.textContent = `Password updated. Sign in with your new password. Sign-in check failed: ${error.message}`;
-        } else {
-            elements.adminStatus.textContent = `Could not update the password: ${error.message}`;
-        }
+        elements.adminStatus.textContent = `Could not send the sign-in link: ${error.message}`;
     } finally {
         submit.disabled = false;
     }
@@ -662,23 +588,17 @@ async function initialize() {
         supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
             auth: { flowType: 'implicit' }
         });
-        supabase.auth.onAuthStateChange(event => {
-            if (event === 'PASSWORD_RECOVERY') {
-                passwordRecoveryEventReceived = true;
-                showPasswordRecovery();
-            }
-        });
         const { data, error } = await supabase.auth.getSession();
         if (error) throw error;
         await refreshSession(data.session);
-        if (passwordRecoveryEventReceived || (passwordRecoveryLink && data.session)) {
-            showPasswordRecovery();
-        } else if (passwordRecoveryLink) {
-            elements.adminPanel.hidden = false;
-            elements.adminStatus.textContent = 'This password reset link is invalid or expired. Request a new reset email and open its newest link.';
-        }
+        if (isAdmin) elements.adminPanel.hidden = false;
         await loadData();
-        setStatus('Directory loaded. Search departments or staff above.', 'success');
+        setStatus(
+            isAdmin
+                ? 'Administrator signed in. You can now edit the directory.'
+                : 'Directory loaded. Search departments or staff above.',
+            'success'
+        );
     } catch (error) {
         setStatus(`Could not load the directory: ${error.message}`, 'error');
     }

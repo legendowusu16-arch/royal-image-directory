@@ -61,14 +61,8 @@
             <h2>Admin tools</h2>
             <p id="adminStatus" class="admin-status" aria-live="polite"></p>
             <form id="loginForm" class="form-grid" hidden>
-                <label>Email<input name="email" type="email" autocomplete="username" required></label>
-                <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
-                <button class="admin-toggle-btn" type="submit">Sign in</button>
-                <button class="admin-toggle-btn" id="forgotPasswordButton" type="button">Forgot password?</button>
-            </form>
-            <form id="passwordRecoveryForm" class="form-grid" hidden>
-                <label>New password<input name="password" type="password" autocomplete="new-password" minlength="8" required></label>
-                <button class="admin-toggle-btn" type="submit">Save new password</button>
+                <label>Administrator email<input name="email" type="email" autocomplete="email" required></label>
+                <button class="admin-toggle-btn" type="submit">Email me a sign-in link</button>
             </form>
             <form id="departmentForm" class="form-grid" hidden>
                 <h3>Add a department</h3>

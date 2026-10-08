@@ -22,7 +22,7 @@ To allow a named administrator to edit:
    on conflict (user_id) do nothing;
    ```
 
-   Check that one row was inserted. If it inserted zero rows, verify the invite was accepted and the email matches exactly. The administrator can then sign in on the live site to add staff, members, and manager names.
+   Check that one row was inserted. If it inserted zero rows, verify the invite was accepted and the email matches exactly. The administrator signs in on the live site without a password: enter the authorized email, click **Email me a sign-in link**, then open the newest email link. The app opens signed in, ready to add staff, members, and manager names. Public sign-ups remain disabled, and only authorized administrator accounts can edit.
 
 The chart and directory are public and searchable. Only the administrator account explicitly added to `admin_users` can change records; Supabase enforces this with row-level security. Do not store confidential staff information in these public tables.
 
