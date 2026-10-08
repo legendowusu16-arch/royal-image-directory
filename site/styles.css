@@ -630,8 +630,23 @@
         .modal:not([hidden]) { display: flex; }
         .modal-section, .modal-form { display: grid; gap: 8px; }
         .modal-section h3, .modal-form h3 { margin: 0; color: #102a43; font-size: 13px; text-transform: uppercase; }
+        .admin-manage-section { display: grid; gap: 8px; }
+        .admin-manage-section h3 { color: #102a43; font-size: 13px; text-transform: uppercase; }
+        .admin-manage-section p { color: #52677b; font-size: 12px; }
+        .admin-department-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 7px; }
+        .admin-department-list .secondary-button { text-align: left; }
         .member-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
         .member-list li { padding: 9px 11px; border-left: 3px solid #d6a84f; border-radius: 6px; background: #f5f7fa; color: #102a43; font-size: 13px; }
+        .record-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+        .secondary-button { padding: 6px 10px; border: 1px solid #b8c5d1; border-radius: 6px; background: #fff; color: #102a43; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
+        .secondary-button:hover { background: #edf2f7; }
+        .secondary-button:disabled { cursor: wait; opacity: 0.6; }
+        .danger-button { border-color: #e4b5b5; color: #9f1d1d; }
+        .danger-button:hover { background: #fff0f0; }
+        .record-edit-form { display: grid; gap: 8px; }
+        .record-edit-form label { display: grid; gap: 5px; font-size: 11px; font-weight: 700; }
+        .record-edit-form input { width: 100%; padding: 8px; border: 1px solid #b8c5d1; border-radius: 5px; font: inherit; }
+        .record-note { display: block; margin-top: 6px; color: #52677b; font-size: 11px; }
         .modal-form label { display: grid; gap: 5px; color: #102a43; font-size: 12px; font-weight: 700; }
         .modal-form .admin-toggle-btn { width: 100%; }
         .modal-message { min-height: 18px; margin: 0; color: #52677b; font-size: 12px; }

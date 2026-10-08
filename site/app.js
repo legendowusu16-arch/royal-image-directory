@@ -9,6 +9,8 @@ const elements = {
     signOutButton: document.getElementById('signOutButton'),
     loginForm: document.getElementById('loginForm'),
     departmentForm: document.getElementById('departmentForm'),
+    adminDepartmentManagement: document.getElementById('adminDepartmentManagement'),
+    adminDepartmentList: document.getElementById('adminDepartmentList'),
     directorySearch: document.getElementById('directorySearch'),
     searchResults: document.getElementById('searchResults'),
     leadership: document.getElementById('leadership'),
@@ -29,6 +31,9 @@ const departmentIcons = {
     'GENERAL MANAGER': 'fa-briefcase',
     'FINANCE ACCOUNTANT': 'fa-calculator',
     'ROYAL TV GENERAL MANAGER': 'fa-tv',
+    'HEAD OF IT': 'fa-server',
+    'DIGITAL MARKETER AND BLOGGER': 'fa-bullhorn',
+    'ROYAL TV ACCRA MANAGER': 'fa-tv',
     'HR MANAGER': 'fa-users',
     'RICHCITY & ESTATES MANAGER': 'fa-building',
     'A&A TRAVEL & TOURS MANAGER': 'fa-plane-departure',
@@ -136,6 +141,37 @@ function renderChart() {
         });
 
     elements.emptyChartMessage.hidden = departments.length > 0;
+    renderAdminDepartments();
+}
+
+function renderAdminDepartments() {
+    elements.adminDepartmentList.replaceChildren();
+    elements.adminDepartmentManagement.hidden = !isAdmin;
+    if (!isAdmin) return;
+
+    [...departments]
+        .sort((a, b) => displayName(a).localeCompare(displayName(b)))
+        .forEach(department => {
+            const button = makeElement('button', 'secondary-button', `Manage ${displayName(department)}`);
+            button.type = 'button';
+            button.dataset.departmentId = department.id;
+            elements.adminDepartmentList.append(button);
+        });
+}
+
+async function ensureRoyalTvDepartments() {
+    const required = [
+        { name: 'HEAD OF IT', position_type: 'tv_right', sort_order: 40 },
+        { name: 'DIGITAL MARKETER AND BLOGGER', position_type: 'tv_left', sort_order: 40 },
+        { name: 'ROYAL TV ACCRA MANAGER', position_type: 'tv_left', sort_order: 50 }
+    ];
+    const existingNames = new Set(departments.map(department => department.name));
+    const missing = required.filter(department => !existingNames.has(department.name));
+    if (missing.length === 0) return;
+
+    const { error } = await supabase.from('departments').insert(missing);
+    if (error) throw error;
+    await loadData();
 }
 
 function renderSearchResults() {
@@ -291,9 +327,92 @@ function appendMemberList(container, department) {
         const item = makeElement('li');
         item.append(makeElement('strong', '', member.name));
         if (member.role) item.append(document.createTextNode(` — ${member.role}`));
+        if (isAdmin) {
+            if (member.role === 'Manager') {
+                item.append(makeElement('small', 'record-note', 'Edit this name in the manager section below.'));
+            } else {
+                renderManageableName(item, member, 'department_members', () => openDepartment(department.id));
+            }
+        }
         list.append(item);
     });
     container.append(list);
+}
+
+function renderManageableName(item, record, table, onChange, options = {}) {
+    const renderDisplay = () => {
+        const displayName = options.displayName ? options.displayName(record) : record.name;
+        item.replaceChildren(makeElement('strong', '', displayName));
+        if (record.role) item.append(document.createTextNode(` — ${record.role}`));
+
+        const actions = makeElement('div', 'record-actions');
+        const editButton = makeElement('button', 'secondary-button', 'Edit name');
+        editButton.type = 'button';
+        editButton.addEventListener('click', () => renderEditor());
+        const deleteButton = makeElement('button', 'secondary-button danger-button', 'Delete');
+        deleteButton.type = 'button';
+        deleteButton.addEventListener('click', async () => {
+            const prompt = options.deletePrompt || `Delete ${record.name}? This cannot be undone.`;
+            if (!window.confirm(prompt)) return;
+            deleteButton.disabled = true;
+            try {
+                const { error } = await supabase.from(table).delete().eq('id', record.id);
+                if (error) throw error;
+                await loadData();
+                (options.onDelete || onChange)();
+            } catch (error) {
+                deleteButton.disabled = false;
+                addMessage(item, `Could not delete entry: ${error.message}`, 'error');
+            }
+        });
+        actions.append(editButton, deleteButton);
+        item.append(actions);
+    };
+
+    const renderEditor = () => {
+        item.replaceChildren();
+        const form = makeElement('form', 'record-edit-form');
+        const nameField = makeFormField('Name', 'name', { value: record.name });
+        const nameInput = nameField.querySelector('input');
+        const buttons = makeElement('div', 'record-actions');
+        const saveButton = makeElement('button', 'secondary-button', 'Save');
+        saveButton.type = 'submit';
+        const cancelButton = makeElement('button', 'secondary-button', 'Cancel');
+        cancelButton.type = 'button';
+        cancelButton.addEventListener('click', renderDisplay);
+        buttons.append(saveButton, cancelButton);
+        form.append(nameField, buttons);
+        const message = addMessage(form, '');
+        form.addEventListener('submit', async event => {
+            event.preventDefault();
+            const name = nameInput.value.trim();
+            if (!name) {
+                nameInput.setCustomValidity('Enter a name.');
+                nameInput.reportValidity();
+                nameInput.addEventListener('input', () => nameInput.setCustomValidity(''), { once: true });
+                return;
+            }
+
+            saveButton.disabled = true;
+            message.textContent = 'Saving…';
+            try {
+                const { error } = await supabase.from(table).update({ name }).eq('id', record.id);
+                if (error) throw error;
+                record.name = name;
+                await loadData();
+                onChange();
+            } catch (error) {
+                message.textContent = `Could not save name: ${error.message}`;
+                message.dataset.kind = 'error';
+                saveButton.disabled = false;
+            }
+        });
+        item.append(form);
+        nameInput.focus();
+        nameInput.select();
+    };
+
+    renderDisplay();
 }
 
 function openDepartment(departmentId) {
@@ -306,7 +425,22 @@ function openDepartment(departmentId) {
     openModal(`${displayName(department)} details`);
     const summary = makeElement('section', 'modal-section');
     summary.append(makeElement('h3', '', 'Department'));
-    summary.append(makeElement('p', '', displayName(department)));
+    if (isAdmin) {
+        const list = makeElement('ul', 'member-list');
+        const item = makeElement('li');
+        renderManageableName(item, department, 'departments', () => openDepartment(department.id), {
+            displayName,
+            deletePrompt: `Delete ${displayName(department)} and all its members? This cannot be undone.`,
+            onDelete: () => {
+                closeModal();
+                setStatus('Department deleted.', 'success');
+            }
+        });
+        list.append(item);
+        summary.append(list);
+    } else {
+        summary.append(makeElement('p', '', displayName(department)));
+    }
     elements.modalBody.append(summary);
 
     const memberSection = makeElement('section', 'modal-section');
@@ -397,8 +531,12 @@ function openStaffDirectory() {
             .sort((a, b) => a.name.localeCompare(b.name))
             .forEach(person => {
                 const item = makeElement('li');
-                item.append(makeElement('strong', '', person.name));
-                if (person.role) item.append(document.createTextNode(` — ${person.role}`));
+                if (isAdmin) {
+                    renderManageableName(item, person, 'staff', openStaffDirectory);
+                } else {
+                    item.append(makeElement('strong', '', person.name));
+                    if (person.role) item.append(document.createTextNode(` — ${person.role}`));
+                }
                 list.append(item);
             });
         section.append(list);
@@ -464,6 +602,7 @@ async function refreshSession(session) {
 
     elements.loginForm.hidden = Boolean(session);
     elements.departmentForm.hidden = !isAdmin;
+    elements.adminDepartmentManagement.hidden = !isAdmin;
     elements.signOutButton.hidden = !session;
     elements.adminToggleButton.textContent = isAdmin ? 'Admin tools' : 'Admin sign in';
     elements.adminStatus.textContent = !session
@@ -471,6 +610,7 @@ async function refreshSession(session) {
         : isAdmin
             ? `Signed in as ${session.user.email}.`
             : `Signed in as ${session.user.email}, but this account has no administrator access.`;
+    renderAdminDepartments();
 }
 
 elements.adminToggleButton.addEventListener('click', () => {
@@ -593,6 +733,7 @@ async function initialize() {
         await refreshSession(data.session);
         if (isAdmin) elements.adminPanel.hidden = false;
         await loadData();
+        if (isAdmin) await ensureRoyalTvDepartments();
         setStatus(
             isAdmin
                 ? 'Administrator signed in. You can now edit the directory.'

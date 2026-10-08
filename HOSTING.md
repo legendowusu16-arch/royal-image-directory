@@ -8,7 +8,9 @@ The site is hosted on GitHub Pages and uses Supabase for its online database and
 
 The Supabase project URL and public publishable key are configured in `site/supabase-config.js`. These browser-visible values can be in the public repository; never put a database password, `service_role` key, or other secret there.
 
-The database was initialized in Supabase SQL Editor using `supabase/schema.sql`. It creates the protected tables and seeds all 19 department buttons from the original chart. Manager names, staff, and department members start empty.
+The database was initialized in Supabase SQL Editor using `supabase/schema.sql`. It creates the protected tables and seeds all 22 department buttons, including the three Royal TV roles. Manager names, staff, and department members start empty.
+
+For an existing database, run [`supabase/manage_directory_names.sql`](./supabase/manage_directory_names.sql) in Supabase SQL Editor to allow administrators to edit names and delete staff, department members, and departments. Deleting a department also deletes its members. After the updated site is published, an administrator sign-in automatically adds any missing Royal TV roles. Alternatively, run [`supabase/add_royal_tv_departments.sql`](./supabase/add_royal_tv_departments.sql) in SQL Editor. New installations get these permissions and roles from `schema.sql`.
 
 To allow a named administrator to edit:
 
@@ -22,7 +24,7 @@ To allow a named administrator to edit:
    on conflict (user_id) do nothing;
    ```
 
-   Check that one row was inserted. If it inserted zero rows, verify the invite was accepted and the email matches exactly. The administrator signs in on the live site without a password: enter the authorized email, click **Email me a sign-in link**, then open the newest email link. The app opens signed in, ready to add staff, members, and manager names. Public sign-ups remain disabled, and only authorized administrator accounts can edit.
+   Check that one row was inserted. If it inserted zero rows, verify the invite was accepted and the email matches exactly. The administrator signs in on the live site without a password: enter the authorized email, click **Email me a sign-in link**, then open the newest email link. The app opens signed in, ready to add or rename departments, add staff and members, and edit manager names. Click a department button to manage its member names; admins can edit or delete existing names there. Public sign-ups remain disabled, and only authorized administrator accounts can edit.
 
 The chart and directory are public and searchable. Only the administrator account explicitly added to `admin_users` can change records; Supabase enforces this with row-level security. Do not store confidential staff information in these public tables.
 

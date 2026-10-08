@@ -47,9 +47,12 @@ values
     ('PROGRAMS', 'tv_left', 10),
     ('CLIENT SERVICE MANAGER', 'tv_left', 20),
     ('MM', 'tv_left', 30),
+    ('DIGITAL MARKETER AND BLOGGER', 'tv_left', 40),
+    ('ROYAL TV ACCRA MANAGER', 'tv_left', 50),
     ('PRODUCTION MANAGER', 'tv_right', 10),
     ('HEAD OF IT BOP', 'tv_right', 20),
     ('STUDIO MANAGER', 'tv_right', 30),
+    ('HEAD OF IT', 'tv_right', 40),
     ('PROPRIETOR', 'ask_institute', 10),
     ('HEAD OF SCHOOL', 'ask_institute', 20),
     ('TEACHERS', 'ask_institute', 30)
@@ -63,6 +66,7 @@ alter table public.admin_users enable row level security;
 revoke all on public.admin_users from anon, authenticated;
 grant select on public.departments, public.staff, public.department_members to anon, authenticated;
 grant insert, update on public.departments, public.staff, public.department_members to authenticated;
+grant delete on public.departments, public.staff, public.department_members to authenticated;
 grant usage on sequence
     public.departments_id_seq,
     public.staff_id_seq,
@@ -96,6 +100,9 @@ create policy "Admins can update departments"
     on public.departments for update to authenticated
     using ((select public.is_admin()))
     with check ((select public.is_admin()));
+create policy "Admins can delete departments"
+    on public.departments for delete to authenticated
+    using ((select public.is_admin()));
 
 create policy "Public can view staff"
     on public.staff for select to anon, authenticated
@@ -103,6 +110,13 @@ create policy "Public can view staff"
 create policy "Admins can add staff"
     on public.staff for insert to authenticated
     with check ((select public.is_admin()));
+create policy "Admins can update staff"
+    on public.staff for update to authenticated
+    using ((select public.is_admin()))
+    with check ((select public.is_admin()));
+create policy "Admins can delete staff"
+    on public.staff for delete to authenticated
+    using ((select public.is_admin()));
 
 create policy "Public can view department members"
     on public.department_members for select to anon, authenticated
@@ -114,6 +128,9 @@ create policy "Admins can update department members"
     on public.department_members for update to authenticated
     using ((select public.is_admin()))
     with check ((select public.is_admin()));
+create policy "Admins can delete department members"
+    on public.department_members for delete to authenticated
+    using ((select public.is_admin()));
 
 create or replace function public.set_department_manager(
     p_department_id bigint,
