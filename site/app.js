@@ -135,18 +135,22 @@ function renderChart() {
             elements.tvLeft.append(departmentButton(department, 'branch-btn'));
         });
 
-    ['HEAD OF IT', 'DIGITAL MARKETER AND BLOGGER', 'ROYAL TV ACCRA MANAGER'].forEach(name => {
+    ['HEAD OF IT', 'DIGITAL MARKETER AND BLOGGER'].forEach(name => {
         const department = ordered.find(item => item.name === name) || { name };
         elements.tvLeft.append(departmentButton(department, 'branch-btn'));
     });
 
     ordered
         .filter(department =>
-            department.position_type === 'tv_right' && department.name !== 'HEAD OF IT'
+            department.position_type === 'tv_right' &&
+            !['HEAD OF IT', 'ROYAL TV ACCRA MANAGER'].includes(department.name)
         )
         .forEach(department => {
             elements.tvRight.append(departmentButton(department, 'branch-btn'));
         });
+    const accraManager = ordered.find(department => department.name === 'ROYAL TV ACCRA MANAGER') ||
+        { name: 'ROYAL TV ACCRA MANAGER' };
+    elements.tvRight.append(departmentButton(accraManager, 'branch-btn'));
 
     ordered
         .filter(department => department.position_type === 'ask_institute')
@@ -177,15 +181,28 @@ async function ensureRoyalTvDepartments() {
     const required = [
         { name: 'HEAD OF IT', position_type: 'tv_left', sort_order: 40 },
         { name: 'DIGITAL MARKETER AND BLOGGER', position_type: 'tv_left', sort_order: 50 },
-        { name: 'ROYAL TV ACCRA MANAGER', position_type: 'tv_left', sort_order: 60 }
+        { name: 'ROYAL TV ACCRA MANAGER', position_type: 'tv_right', sort_order: 40 }
     ];
-    const existingNames = new Set(departments.map(department => department.name));
-    const missing = required.filter(department => !existingNames.has(department.name));
-    if (missing.length === 0) return;
-
-    const { error } = await supabase.from('departments').insert(missing);
-    if (error) throw error;
-    await loadData();
+    const changes = await Promise.all(required.map(async department => {
+        const existing = departments.find(item => item.name === department.name);
+        if (!existing) {
+            const { error } = await supabase.from('departments').insert(department);
+            if (error) throw error;
+            return true;
+        }
+        if (
+            existing.position_type !== department.position_type ||
+            existing.sort_order !== department.sort_order
+        ) {
+            const { error } = await supabase.from('departments')
+                .update({ position_type: department.position_type, sort_order: department.sort_order })
+                .eq('id', existing.id);
+            if (error) throw error;
+            return true;
+        }
+        return false;
+    }));
+    if (changes.some(Boolean)) await loadData();
 }
 
 function renderSearchResults() {
@@ -629,7 +646,7 @@ function openDepartment(departmentId) {
 function openUnconfiguredDepartment(name) {
     const department = {
         name,
-        position_type: 'tv_left'
+        position_type: name === 'ROYAL TV ACCRA MANAGER' ? 'tv_right' : 'tv_left'
     };
     openModal(`${displayName(department)} details`);
     const section = makeElement('section', 'modal-section');
