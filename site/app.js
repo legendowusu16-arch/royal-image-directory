@@ -344,7 +344,9 @@ function appendMemberList(container, department) {
             if (member.role === 'Manager') {
                 item.append(makeElement('small', 'record-note', 'Edit this name in the manager section below.'));
             } else {
-                renderManageableName(item, member, 'department_members', () => openDepartment(department.id));
+                renderManageableName(item, member, 'department_members', () => openDepartment(department.id), {
+                    editRole: true
+                });
             }
         }
         list.append(item);
@@ -387,6 +389,13 @@ function renderManageableName(item, record, table, onChange, options = {}) {
         const form = makeElement('form', 'record-edit-form');
         const nameField = makeFormField('Name', 'name', { value: record.name });
         const nameInput = nameField.querySelector('input');
+        const roleInput = options.editRole
+            ? makeFormField('Role / position', 'role', {
+                value: record.role || '',
+                required: table === 'staff'
+            }).querySelector('input')
+            : null;
+        if (roleInput) form.append(roleInput.parentElement);
         const buttons = makeElement('div', 'record-actions');
         const saveButton = makeElement('button', 'secondary-button', 'Save');
         saveButton.type = 'submit';
@@ -394,7 +403,8 @@ function renderManageableName(item, record, table, onChange, options = {}) {
         cancelButton.type = 'button';
         cancelButton.addEventListener('click', renderDisplay);
         buttons.append(saveButton, cancelButton);
-        form.append(nameField, buttons);
+        form.prepend(nameField);
+        form.append(buttons);
         const message = addMessage(form, '');
         form.addEventListener('submit', async event => {
             event.preventDefault();
@@ -409,9 +419,12 @@ function renderManageableName(item, record, table, onChange, options = {}) {
             saveButton.disabled = true;
             message.textContent = 'Saving…';
             try {
-                const { error } = await supabase.from(table).update({ name }).eq('id', record.id);
+                const changes = { name };
+                if (roleInput) changes.role = roleInput.value.trim();
+                const { error } = await supabase.from(table).update(changes).eq('id', record.id);
                 if (error) throw error;
                 record.name = name;
+                if (roleInput) record.role = roleInput.value.trim();
                 await loadData();
                 onChange();
             } catch (error) {
@@ -596,7 +609,7 @@ function openStaffDirectory() {
             .forEach(person => {
                 const item = makeElement('li');
                 if (isAdmin) {
-                    renderManageableName(item, person, 'staff', openStaffDirectory);
+                    renderManageableName(item, person, 'staff', openStaffDirectory, { editRole: true });
                 } else {
                     item.append(makeElement('strong', '', person.name));
                     if (person.role) item.append(document.createTextNode(` — ${person.role}`));
