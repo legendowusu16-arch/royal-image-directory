@@ -61,9 +61,8 @@
             <h2>Admin tools</h2>
             <p id="adminStatus" class="admin-status" aria-live="polite"></p>
             <form id="loginForm" class="form-grid" hidden>
-                <label>Email<input name="email" type="email" autocomplete="username" required></label>
-                <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
-                <button class="admin-toggle-btn" type="submit">Sign in</button>
+                <label>Admin PIN<input name="password" type="password" autocomplete="current-password" inputmode="numeric" required></label>
+                <button class="admin-toggle-btn" type="submit">Enter admin</button>
             </form>
             <form id="passwordForm" class="form-grid" hidden>
                 <h3>Change your password</h3>

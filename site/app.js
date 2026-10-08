@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { SUPABASE_ANON_KEY, SUPABASE_URL } from './supabase-config.js';
+import { SUPABASE_ADMIN_EMAIL, SUPABASE_ANON_KEY, SUPABASE_URL } from './supabase-config.js';
 
 const elements = {
     appStatus: document.getElementById('appStatus'),
@@ -65,6 +65,7 @@ let members = [];
 let isAdmin = false;
 let currentSession = null;
 let contactFieldsAvailable = true;
+let adminLoginConfigured = false;
 
 function setStatus(message, kind = 'info') {
     elements.appStatus.textContent = message;
@@ -808,10 +809,12 @@ async function refreshSession(session) {
     elements.signOutButton.hidden = !session;
     elements.adminToggleButton.textContent = isAdmin ? 'Admin tools' : 'Admin sign in';
     elements.adminStatus.textContent = !session
-        ? 'Sign in with an administrator account to edit the directory.'
+        ? adminLoginConfigured
+            ? 'Enter the shared administrator password to edit the directory.'
+            : 'Password-only sign-in is not configured yet.'
         : isAdmin
-            ? `Signed in as ${session.user.email}.`
-            : `Signed in as ${session.user.email}, but this account has no administrator access.`;
+            ? 'Signed in with the shared administrator account.'
+            : 'This account does not have administrator access.';
     renderAdminDepartments();
 }
 
@@ -829,18 +832,21 @@ elements.loginForm.addEventListener('submit', async event => {
     submit.disabled = true;
     elements.adminStatus.textContent = 'Signing in…';
     try {
-        const formData = new FormData(elements.loginForm);
-        const email = String(formData.get('email')).trim();
-        const password = String(formData.get('password'));
+        if (!adminLoginConfigured) {
+            throw new Error('Password-only administrator sign-in has not been configured.');
+        }
+        const password = String(new FormData(elements.loginForm).get('password'));
         const { data, error } = await supabase.auth.signInWithPassword({
-            email,
+            email: SUPABASE_ADMIN_EMAIL,
             password
         });
         if (error) throw error;
         elements.loginForm.reset();
         elements.adminPanel.hidden = false;
         await refreshSession(data.session);
-        elements.adminStatus.textContent = `Signed in as ${email}.`;
+        elements.adminStatus.textContent = isAdmin
+            ? 'Signed in with the shared administrator account.'
+            : 'This account does not have administrator access.';
     } catch (error) {
         elements.adminStatus.textContent = `Could not sign in: ${error.message}`;
     } finally {
@@ -958,6 +964,7 @@ async function initialize() {
     }
 
     try {
+        adminLoginConfigured = Boolean(SUPABASE_ADMIN_EMAIL);
         supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
             auth: { flowType: 'implicit' }
         });

@@ -12,11 +12,12 @@ The database was initialized in Supabase SQL Editor using `supabase/schema.sql`.
 
 For an existing database, run [`supabase/add_department_contact_fields.sql`](./supabase/add_department_contact_fields.sql) and [`supabase/manage_directory_names.sql`](./supabase/manage_directory_names.sql) in Supabase SQL Editor. The first adds the email and phone fields; the second allows administrators to edit names, clear manager names, and delete staff, department members, and departments. Deleting a department also deletes its members. These one-time SQL steps are required for all hosted features. The three Royal TV role buttons are shown while the directory loads; after an administrator signs in, their records are added or repositioned automatically. Run [`supabase/add_royal_tv_departments.sql`](./supabase/add_royal_tv_departments.sql) to reposition roles directly in SQL Editor. Royal TV Accra Manager appears below Studio Managers. New installations get these fields, permissions, and roles from `schema.sql`.
 
-To give yourself and a manager separate administrator accounts:
+To configure one shared password-only administrator login for you and the manager:
 
 1. In Supabase **Authentication → Sign In / Providers**, enable the Email provider and turn off public user sign-ups.
-2. In **Authentication → Users**, create a user for each person with that person's email and a temporary password. Give each person their own account; do not share passwords.
-3. In SQL Editor, replace the example with each person's exact email and run this once for each account:
+2. In **Authentication → Users**, create or choose one Supabase Auth account for the shared administrator. Use a dedicated email address for this account if possible; the sign-in screen will not ask for the email, but the configured email is visible in the public site source.
+3. Set `SUPABASE_ADMIN_EMAIL` in [`site/supabase-config.js`](./site/supabase-config.js) to that account's email. This is an identifier, not a password or secret. Publish the site after changing it.
+4. In SQL Editor, replace the example with the exact account email and run:
 
    ```sql
    insert into public.admin_users (user_id)
@@ -24,7 +25,9 @@ To give yourself and a manager separate administrator accounts:
    on conflict (user_id) do nothing;
    ```
 
-   Check that one row was inserted for that email. If it inserted zero rows, verify the account exists and the email matches exactly. The user signs in on the hosted site by clicking **Admin sign in**, then entering their email and password. After signing in, they can set their own private password from **Admin tools → Change your password**. Open **Admin tools** to see the department management list. Each authorized administrator can edit every department, contact, manager, member, and staff record; access is not restricted to a particular department. Public sign-ups remain disabled, and only accounts explicitly added to `admin_users` can make changes.
+   Check that one row was inserted. If it inserted zero rows, verify that the account exists and the email matches exactly. If the other existing admin account should no longer be authorized separately, remove its row from `public.admin_users` as well.
+
+   You and the manager then sign in by clicking **Admin sign in** and entering the same password. Set or change it after signing in under **Admin tools → Change your password**. Anyone who knows it can edit every department, contact, manager, member, and staff record. All edits use the same account and cannot be attributed to a specific person. Do not put the password in `supabase-config.js` or any source file. Keep public sign-ups disabled.
 
 The chart and directory are public and searchable. Only accounts explicitly added to `admin_users` can change records; Supabase enforces this with row-level security. Do not store confidential staff information in these public tables.
 
